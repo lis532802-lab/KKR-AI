@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKR AI - Workspace Studio</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/chat.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <a href="index.html" class="kkr-brand">
+                <div class="kkr-logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <span class="kkr-logo-text">KKR AI</span>
+            </a>
+        </div>
+        <button id="btn-new-chat" class="btn-new-chat">+ New Conversation</button>
+        <div id="chat-history-list" class="chat-history-list"></div>
+        <div style="margin-top:auto; padding-top:15px; border-top:1px solid var(--border-color); display:flex; gap:10px;">
+            <a href="profile.html" style="color:var(--text-main); text-decoration:none; font-size:0.9rem;">Profile</a> | 
+            <a href="settings.html" style="color:var(--text-main); text-decoration:none; font-size:0.9rem;">Settings</a>
+        </div>
+    </aside>
+
+    <main class="chat-workspace">
+        <header class="chat-header glass-panel">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <select id="model-select" class="model-selector">
+                    <option value="gpt-4o-mini">KKR Fast (GPT-4o-Mini)</option>
+                    <option value="gpt-4">KKR Reasoning Pro (GPT-4o)</option>
+                </select>
+                <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;">
+                    <input type="checkbox" id="thinking-mode-toggle"> Thinking Mode
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer;">
+                    <input type="checkbox" id="web-search-toggle"> Web Search
+                </label>
+            </div>
+        </header>
+
+        <section id="messages-container" class="messages-container"></section>
+
+        <footer class="input-container-wrapper">
+            <div class="chat-input-box">
+                <input type="file" id="file-upload-input" style="display:none;">
+                <button class="action-btn" onclick="document.getElementById('file-upload-input').click()">📎</button>
+                <textarea id="prompt-input" rows="1" placeholder="Message KKR AI..."></textarea>
+                <div class="input-actions">
+                    <button id="voice-btn" class="action-btn">🎙️</button>
+                    <button id="send-btn" class="btn-primary" style="padding:8px 16px;">Send</button>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script type="module">
+        import { createChatSession } from './firebase/firestore.js';
+        import { listenAuthState } from './firebase/auth.js';
+        import { renderSidebarChats } from './assets/js/sidebar.js';
+        import { ChatEngine } from './assets/js/chat.js';
+        import { SpeechController } from './assets/js/voice.js';
+
+        let activeUser = null;
+        let activeChatId = null;
+        let chatEngine = null;
+
+        listenAuthState(async (user) => {
+            if (user) {
+                activeUser = user;
+                activeChatId = await createChatSession(user.uid);
+                chatEngine = new ChatEngine(activeChatId, user.uid);
+                renderSidebarChats(user.uid, activeChatId, loadChat);
+            }
+        });
+
+        const loadChat = (chatId) => {
+            activeChatId = chatId;
+            document.getElementById('messages-container').innerHTML = '';
+            chatEngine = new ChatEngine(chatId, activeUser.uid);
+            renderSidebarChats(activeUser.uid, chatId, loadChat);
+        };
+
+        const handleSend = () => {
+            const input = document.getElementById('prompt-input');
+            const text = input.value.trim();
+            if (!text || !chatEngine) return;
+            
+            const thinkingMode = document.getElementById('thinking-mode-toggle').checked;
+            const webSearch = document.getElementById('web-search-toggle').checked;
+            const model = document.getElementById('model-select').value;
+
+            chatEngine.sendMessage(text, { thinkingMode, webSearch, model });
+            input.value = '';
+        };
+
+        document.getElementById('send-btn').addEventListener('click', handleSend);
+        document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        const voice = new SpeechController((transcript) => {
+            document.getElementById('prompt-input').value = transcript;
+        });
+        document.getElementById('voice-btn').addEventListener('click', () => voice.startListening());
+
+        document.getElementById('btn-new-chat').addEventListener('click', async () => {
+            if (activeUser) {
+                activeChatId = await createChatSession(activeUser.uid);
+                loadChat(activeChatId);
+            }
+        });
+    </script>
+</body>
+</html>
