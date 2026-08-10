@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile - KKR AI</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body style="padding:40px;">
+    <div class="glass-panel" style="max-width:600px; margin:0 auto; padding:40px;">
+        <a href="chat.html" class="kkr-brand" style="margin-bottom:20px;">
+            <div class="kkr-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <span class="kkr-logo-text">KKR AI</span>
+        </a>
+        <h2 style="margin-bottom:20px;">User Profile</h2>
+        <div id="profile-details" style="line-height:2;">Loading profile details...</div>
+        <button id="logout-btn" class="btn-primary" style="margin-top:20px; background:#ef4444;">Logout</button>
+    </div>
+    <script type="module">
+        import { listenAuthState, logoutUser } from './firebase/auth.js';
+        listenAuthState(user => {
+            if (user) {
+                document.getElementById('profile-details').innerHTML = `
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>User ID:</strong> ${user.uid}</p>
+                    <p><strong>Account Status:</strong> Verified</p>
+                `;
+            }
+        });
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await logoutUser();
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>
