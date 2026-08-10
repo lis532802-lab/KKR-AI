@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - KKR AI</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body style="padding:40px;">
+    <div class="glass-panel" style="max-width:600px; margin:0 auto; padding:40px;">
+        <a href="chat.html" class="kkr-brand" style="margin-bottom:20px;">
+            <div class="kkr-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <span class="kkr-logo-text">KKR AI</span>
+        </a>
+        <h2>Preferences & Settings</h2>
+        <div style="margin-top:20px;">
+            <button id="theme-toggle-btn" class="btn-primary">Toggle Dark / Light Theme</button>
+        </div>
+    </div>
+    <script type="module">
+        import { toggleTheme } from './assets/js/theme.js';
+        document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>
